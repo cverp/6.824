@@ -32,5 +32,50 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 	//
 	// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 	//
+	var wg sync.WaitGroup
+	for i=0;i<ntasks;i++ {
+		wg.Add(1)
+		go fun(taskNum int,file String) {
+			defer wg.Done()
+			args := new(DoTaskArgs)
+			args.JobName = jobName
+			args.File = file
+			args.Phase = phase
+			args.NumOtherPhase = n_other
+			args.TaskNumber = taskNum
+			
+			worker := <-registerChan
+			ok := call(worker,"Worker.DoTask",args,new(struct{}))
+			if ok {
+				fmt.Printf("schedule %d task to %s\n",taskNum,work)
+				go func() {
+					registerChan <- worker
+				}
+			}
+		}(i,mapFiles[i])
+	}
+	
+	wg.Wait()
 	fmt.Printf("Schedule: %v phase done\n", phase)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
